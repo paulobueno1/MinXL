@@ -17,4 +17,4 @@ add_library(
 
 set_target_properties(MinXL PROPERTIES OUTPUT_NAME "minxl")
 
-target_include_directories(MinXL PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+target_include_directories(MinXL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
