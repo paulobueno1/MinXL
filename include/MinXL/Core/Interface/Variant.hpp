@@ -53,19 +53,19 @@ namespace mxl
             return _Value;
         }
 
-        // Direct accessors; faster but unsafe
+        // Direct numeric accessors
 
-        inline auto& Int16()                { return _Value.Int16; }
-        inline auto& Int32()                { return _Value.Int32; }
-        inline auto& Int64()                { return _Value.Int64; }
-        inline auto& Float()                { return _Value.Float; }
-        inline auto& Double()               { return _Value.Double;}
+        inline auto& Int16()                { if (_Type == Type::ID::Int16)     return _Value.Int16;    MXL_THROW("Invalid direct access; Variant is not of type Int16");  }
+        inline auto& Int32()                { if (_Type == Type::ID::Int32)     return _Value.Int32;    MXL_THROW("Invalid direct access; Variant is not of type Int32");  }
+        inline auto& Int64()                { if (_Type == Type::ID::Int64)     return _Value.Int64;    MXL_THROW("Invalid direct access; Variant is not of type Int64");  }
+        inline auto& Float()                { if (_Type == Type::ID::Float)     return _Value.Float;    MXL_THROW("Invalid direct access; Variant is not of type Float");  }
+        inline auto& Double()               { if (_Type == Type::ID::Double)    return _Value.Double;   MXL_THROW("Invalid direct access; Variant is not of type Double"); }
 
-        inline const auto& Int16() const    { return _Value.Int16; }
-        inline const auto& Int32() const    { return _Value.Int32; }
-        inline const auto& Int64() const    { return _Value.Int64; }
-        inline const auto& Float() const    { return _Value.Float; }
-        inline const auto& Double() const   { return _Value.Double;}
+        inline const auto& Int16() const    { if (_Type == Type::ID::Int16)     return _Value.Int16;    MXL_THROW("Invalid direct access; Variant is not of type Int16");  }
+        inline const auto& Int32() const    { if (_Type == Type::ID::Int32)     return _Value.Int32;    MXL_THROW("Invalid direct access; Variant is not of type Int32");  }
+        inline const auto& Int64() const    { if (_Type == Type::ID::Int64)     return _Value.Int64;    MXL_THROW("Invalid direct access; Variant is not of type Int64");  }
+        inline const auto& Float() const    { if (_Type == Type::ID::Float)     return _Value.Float;    MXL_THROW("Invalid direct access; Variant is not of type Float");  }
+        inline const auto& Double() const   { if (_Type == Type::ID::Double)    return _Value.Double;   MXL_THROW("Invalid direct access; Variant is not of type Double"); }
 
         Type::ID ArrayType() const
         {

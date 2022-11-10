@@ -691,11 +691,11 @@ inline std::ostream& operator<<(std::ostream &os, const mxl::Variant& var)
 {
     switch (var.Type())
     {
-        case mxl::Type::ID::Int16:       return os << var.Value().Int16;
-        case mxl::Type::ID::Int32:       return os << var.Value().Int32;
-        case mxl::Type::ID::Int64:       return os << var.Value().Int64;
-        case mxl::Type::ID::Float:       return os << var.Value().Float;
-        case mxl::Type::ID::Double:      return os << var.Value().Double;
+        case mxl::Type::ID::Int16:       return os << var.Int16();
+        case mxl::Type::ID::Int32:       return os << var.Int32();
+        case mxl::Type::ID::Int64:       return os << var.Int64();
+        case mxl::Type::ID::Float:       return os << var.Float();
+        case mxl::Type::ID::Double:      return os << var.Double();
         case mxl::Type::ID::String:      return os << mxl::String::Str16to8(var.Value().String);
         default: ;
     }
