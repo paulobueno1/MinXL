@@ -6,7 +6,7 @@
 
 Excel for Windows has good support for interoperability with C++/C#; unfortunately the same cannot be said about Excel for Mac. MinXL aims to bridge that gap by allowing you to write functions in C++ and call them from VBA with a very intuitive API.
 
-~~Although not header-only, MinXL is very simple to integrate. If you already have your project set up, just clone the repository into your dependencies folder and add it to your CMakeLists.txt file.~~ MinXL is now header-only! Just add it to your include paths, then ```#include <MinXL/MinXL.hpp>``` wherever you want to use it.
+~~Although not header-only, MinXL is very simple to integrate. If you already have your project set up, just clone the repository into your dependencies folder and add it to your CMakeLists.txt file.~~ MinXL is now header-only! Just add the ```include``` folder to your include paths, then ```#include <MinXL/MinXL.hpp>``` wherever you want to use it.
 
 <br>
 
@@ -25,11 +25,12 @@ Excel for Windows has good support for interoperability with C++/C#; unfortunate
 #include <MinXL/MinXL.hpp>
 
 // Extern C is not mandatory, but it makes importing functions on VBA much easier
+// Alternatively, if you like suffering, you can import the function by its mangled name...
 extern "C"
 {
-    // We recommend receiving data using mxl::Variant&
-    // Primitive numeric types are ok, but be aware that on the VBA side a 
-    // Long has 4 bytes (int32_t) and an Integer has 2 bytes (int16_t).
+    // I strongly recommend receiving data using mxl::Variant&; a few extra bytes won't really matter
+    // Primitive numeric types will work, but be aware of VBA's somewhat counter-intuitive naming
+    // (e.g Longs have 4 bytes, Integers (and Booleans!!!) have 2 bytes, etc)
     mxl::Variant IncrementArrayBy(mxl::Variant& arg, double value)
     {
         try
@@ -37,7 +38,7 @@ extern "C"
             // MinXL will automatically check if this conversion is valid
             mxl::Array<mxl::Variant> array = std::move(arg);
 
-            // mxl::Variant comes with very convenient operator overloads
+            // mxl::Variant has convenient operator overloads to make your life easier
             for (auto& i : array)
                 i += value;
 
@@ -46,7 +47,8 @@ extern "C"
         }
         catch (mxl::Exception& e)
         {
-            // If the conversion fails, you can return the error message to Excel
+            // If anything within the try block fails, MinXL will throw an exception with a
+            // nice understandable message that can be returned as a string to Excel
             return mxl::String{e.what()};
         }
     }
@@ -58,8 +60,8 @@ extern "C"
 ### On VBA
 ```VB
 Private Declare PtrSafe Function IncrementArrayBy _
-Lib "/Library/Application Support/Microsoft/libexample.dylib" _
-(ByRef v as Variant, ByVal d as Double) As Variant      ' Always pass Variants ByRef
+Lib "/Library/Application Support/Microsoft/YourLibrary.dylib" _
+(ByRef v as Variant, ByVal d as Double) As Variant      ' Always pass Variants ByRef!
 
 Public Function CallLibFunction(r as Range) as Variant
     CallLibFunction = IncrementArrayBy(r.Value, 2.5)    ' Extract the Range's values first!!!
@@ -71,18 +73,17 @@ End Function
 ### On Excel
 ![](docs/img/usage.png?raw=true)
 
-**_And not a single copy was performed :D_**
+**_In this example, not a single copy was performed inside C++ :D_**
 
-<!-- [**See more examples**](docs/README.md) -->
 
 <br>
 
 ---
 
-## Contribution, Questions and Feedback
+## Contributions, questions and feedback
 
-Contributions are welcome! Prefer pull requests and, please, stick to the code style.
+Contributions are welcome! Fork it, hack it and open a PR :)
 
-This is still an early version and its limitations will be addressed over time. 
+This is still an early version and some limitations will be addressed over time. 
 
-If you have any trouble or doubts using MinXL, feel free to open an issue or message me directly at paulo.buenov@gmail.com.
+If you have troubles and/or doubts while using MinXL, feel free to open an issue or message me directly at paulo.buenov@gmail.com.

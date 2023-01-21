@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Interface/String.hpp"
-#include "Core/Interface/Variant.hpp"
+#include "MinXL/Core/Interface/String.hpp"
+#include "MinXL/Core/Interface/Variant.hpp"
 
 namespace mxl
 {

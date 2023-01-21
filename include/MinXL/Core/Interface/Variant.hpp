@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Common.hpp"
-#include "Core/Types.hpp"
+#include "MinXL/Core/Common.hpp"
+#include "MinXL/Core/Types.hpp"
 
 
 namespace mxl
@@ -75,12 +75,12 @@ namespace mxl
         bool IsArrayOfType(Type::ID type) const
         {
             return IsArray() && (type == (_Type ^ Type::ID::Array));
-        };
+        }
 
         bool IsArrayOfType(uint32_t type) const
         {
             return IsArray() && ((Type::ID)type == (_Type ^ Type::ID::Array));
-        };
+        }
 
     private:
         void Deallocate();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Interface/Array.hpp"
+#include "MinXL/Core/Interface/Array.hpp"
 
 namespace mxl
 {

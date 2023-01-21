@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Common.hpp"
-#include "Core/Types.hpp"
+#include "MinXL/Core/Common.hpp"
+#include "MinXL/Core/Types.hpp"
 
 
 namespace mxl
