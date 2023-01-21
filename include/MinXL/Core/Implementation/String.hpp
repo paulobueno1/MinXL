@@ -1,175 +1,124 @@
 #pragma once
 
+#include "MinXL/Core/Types.hpp"
+
 #include "MinXL/Core/Interface/String.hpp"
 #include "MinXL/Core/Interface/Variant.hpp"
 
+
 namespace mxl
 {
-    inline String::String(): _Container{nullptr}
+    inline String::String(): _Buffer{nullptr}
     {
     }
 
-    
+
     inline String::String(const char16_t* str)
     {
         Allocate(str);
     }
 
-    
-    inline String::String(const char* str)     
+
+    inline String::String(StringContainer* str): _Buffer{str->Buffer}
     {
-        Allocate(Str8to16(str));
     }
 
-    
-    inline String::String(const String& other)
+
+    inline String::String(const char* str): String(Str8to16(str))
     {
-        Allocate(static_cast<char16_t*>(other));
     }
 
-    
-    inline String::String(String&& other)
+
+    inline String::String(const String& other): String(other.Buffer())
     {
-        if (static_cast<char16_t*>(other))
-        {
-            _Container = other._Container;
-            other._Container = nullptr;
-        }
     }
 
-    
+
+    inline String::String(String&& other): _Buffer{other._Buffer}
+    {
+        std::memset(&other, 0, sizeof(String));
+    }
+
+
     inline String& String::operator=(const String& other)
     {
-        Deallocate(*this);
+        if (this == &other)
+            return *this;
 
-        if (auto buffer = static_cast<char16_t*>(other))
-            Allocate(buffer);
+        Deallocate(Buffer());
+        Allocate(other.Buffer());
         
         return *this;
     }
 
-    
+
     inline String& String::operator=(String&& other)
     {
-        if (other._Container)
-        {
-            _Container = other._Container;
-            other._Container = nullptr;
-        }
-        else
-            _Container = nullptr;
+        if (this == &other)
+            return *this;
+
+        Deallocate(Buffer());
+
+        std::memcpy(this, &other, sizeof(String));
+        std::memset(&other, 0, sizeof(String));
         
         return *this;
     }
 
-    
-    inline String::String(const Variant& var)
-    {
-        auto& value = var.Value();
 
-        if (var.IsString())
-            Allocate(value.String);
-        else
-            _Container = nullptr;
+    inline String::String(const Variant& var): String(var.operator const String&())
+    {
     }
 
-    
-    inline String::String(Variant&& var)
+
+    inline String::String(Variant&& var): String(std::move(var).operator String())
     {
-        auto& value = var.Value();
-
-        if (var.IsString())
-        {
-            _Container = reinterpret_cast<Container*>(
-                (char*)value.String - sizeof(StringHeader)
-            );
-
-            var._Type = Type::ID::Empty;
-            var._Value.String = nullptr;
-        }
-        else
-            _Container = nullptr;
     }
 
-    
-    inline String& String::operator=(const Variant& var)
-    {
-        auto& value = var.Value();
 
-        if (var.IsString())
-            Allocate(value.String);
-        else
-            _Container = nullptr;
-        
-        return *this;
-    }
-
-    
-    inline String& String::operator=(Variant&& var)
-    {
-        auto& value = var.Value();
-
-        if (var.IsString())
-        {
-            _Container = reinterpret_cast<Container*>(
-                (char*)value.String - sizeof(StringHeader)
-            );
-
-            var._Type = Type::ID::Empty;
-            var._Value.String = nullptr;
-        }
-        else
-            _Container = nullptr;
-        
-        return *this;
-    }
-
-    
-    inline String::String(const std::string_view& str)
-    {
-        Allocate(Str8to16(str.data()));
-    }
-
-    
-    inline String::String(const std::string& str)
-    {
-        Allocate(Str8to16(str.c_str()));
-    }
-
-    
-    inline String::String(const std::stringstream& str)
-    {
-        Allocate(Str8to16(str.str().c_str()));
-    }
-
-    
     inline String::~String() 
     {
-        Deallocate(*this);
+        Deallocate(Buffer());
     }
 
-    
-    inline bool String::operator==(const String& other)
+
+    inline bool String::operator==(const String& other) const
     {
-        return Compare(
-            static_cast<char16_t*>(*this), static_cast<char16_t*>(other)
+        return Compare(Buffer(), other.Buffer());
+    }
+
+
+    inline bool String::operator!=(const String& other) const
+    {
+        return !Compare(Buffer(), other.Buffer());
+    }
+
+
+    inline uint64_t String::Size() const
+    {
+        return _Buffer ? Container()->Header.Size / sizeof(char16_t) : 0;
+    }
+
+
+    inline char16_t* String::Buffer() const
+    {
+        return _Buffer;
+    }
+
+
+    inline StringContainer* String::Container() const
+    {
+        return reinterpret_cast<StringContainer*>(
+            (std::byte*)_Buffer - sizeof(StringHeader)
         );
     }
 
-    
-    inline bool String::operator!=(const String& other)
-    {
-        return !Compare(
-            static_cast<char16_t*>(*this), static_cast<char16_t*>(other)
-        );
-    }
 
-    
     inline void String::Allocate(const char16_t* str)
     {   
         if (!str)
         {
-            _Container = nullptr;
+            _Buffer = nullptr;
         }
         else
         {
@@ -186,55 +135,28 @@ namespace mxl
             if (allocSize % 16 > 0)
                 allocSize += (16 - allocSize % 16);
 
-            if ((_Container = static_cast<Container*>(std::malloc(allocSize))))
+            if (auto container = static_cast<StringContainer*>(std::malloc(allocSize)))
             {
-                _Container->Head.Size = (length - 1) * sizeof(char16_t);
-                std::copy(str, str + length, _Container->Buffer);
+                container->Header.Size = (length - 1) * sizeof(char16_t);
+                std::copy(str, str + length, container->Buffer);
+                
+                _Buffer = container->Buffer;
             }
             else
-                MXL_THROW("Could not allocate String buffer");
+            {
+                MXL_THROW("Dynamic allocation failed.");
+            }
         }
     }
 
-    
-    inline void String::Allocate(const String& str)
-    {
-        if (auto buffer = static_cast<char16_t*>(str))
-            Allocate(buffer);
-    }
 
-    
     inline void String::Deallocate(char16_t* str)
     {
-        if (auto container = reinterpret_cast<Container*>((char*)str - sizeof(StringHeader)))
-        {
-            std::free(container);
-        }
+        if (str)
+            std::free((std::byte*)str - sizeof(StringHeader));
     }
 
-    
-    inline void String::Deallocate(String& str)
-    {
-        if (str._Container)
-        {
-            std::free(str._Container);
-            str._Container = nullptr;
-        }
-    }
 
-    
-    inline uint64_t String::Size() const
-    {
-        return _Container ? _Container->Head.Size / sizeof(char16_t) : 0;
-    }
-
-    
-    inline const char* String::CStr() const
-    {
-        return Str16to8(_Container->Buffer);
-    }
-
-    
     inline bool String::Compare(const char16_t* lhs, const char16_t* rhs)
     {
         if (lhs == nullptr && rhs == nullptr)
@@ -263,7 +185,7 @@ namespace mxl
             return false;
     }
 
-    
+
     inline const char* String::Str16to8(const char16_t* str)
     {
         if (!(*str))
@@ -283,7 +205,7 @@ namespace mxl
         return converted;
     }
 
-    
+
     inline const char16_t* String::Str8to16(const char* str)
     {
         if (!(*str))
@@ -303,5 +225,10 @@ namespace mxl
 
         converted[n - 1] = '\0';
         return converted;
+    }
+
+    inline std::ostream& operator<<(std::ostream &os, const String& str)
+    {
+        return os << String::Str16to8(str.Buffer());
     }
 }

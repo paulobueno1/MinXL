@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Common.hpp"
-
 namespace mxl
 {
     class Variant;
@@ -18,27 +16,67 @@ namespace mxl
                     std::remove_const_t<_T1>, std::remove_const_t<_T2>
                 >;
             };
-        };
+        }
 
-        // Checks if two types are equal. Ignores const.
+        //
+        // Check if two types are equal. Ignores const.
+        //
         template <typename _T1, typename _T2> 
         inline constexpr bool IsSame = Detail::IsSameType<_T1, _T2>::value;
-    };
+
+        namespace Detail
+        {
+            template <typename _Ty>
+            struct IsNumericType {
+                static constexpr bool value = IsSame<_Ty, int16_t>
+                    || IsSame<_Ty, int32_t>
+                    || IsSame<_Ty, int64_t>
+                    || IsSame<_Ty, float>
+                    || IsSame<_Ty, double>;
+            };
+        }
+
+        //
+        // Check if type is Numeric. Ignores const.
+        //
+        template <typename _Ty> 
+        inline constexpr bool IsNumeric = Detail::IsNumericType<_Ty>::value;
+    }
 
     // Supported numeric types
-    template <typename _Ty> concept Numeric = 
-        Type::IsSame<_Ty, int16_t>
-        || Type::IsSame<_Ty, int16_t>
-        || Type::IsSame<_Ty, int32_t>
-        || Type::IsSame<_Ty, int64_t>
-        || Type::IsSame<_Ty, float>
-        || Type::IsSame<_Ty, double>;
+    template <typename _Ty> concept Numeric = Type::IsNumeric<_Ty>;
+
 
     // Valid Array value type (Supported numeric types + Variant)
     template <typename _Ty> concept ArrayValue = Numeric<_Ty> || Type::IsSame<_Ty, Variant>;
     template <ArrayValue _Ty> class Array;
     struct ArrayHeader;
     struct ArrayBody;
+
+    namespace Type
+    {
+        namespace Detail
+        {
+            template <class, template <class> class>
+            struct IsInstanceType : public std::false_type {};
+
+            template <class _T1, template <class> class _T2>
+            struct IsInstanceType<_T2<_T1>, _T2> : public std::true_type {};
+
+            template<typename _Ty>
+            struct IsArrayType {
+                static constexpr bool value = IsInstanceType<std::remove_const_t<_Ty>, Array>::value;
+            };
+        }
+
+        template <typename _Ty>
+        inline constexpr bool IsArray = Detail::IsArrayType<_Ty>::value;
+    }
+
+    template <typename _Ty> concept VariantValue    = Numeric<_Ty> || Type::IsSame<_Ty, String>     || Type::IsArray<_Ty>;
+    template <typename _Ty> concept VariantValueRaw = Numeric<_Ty> || Type::IsSame<_Ty, char16_t*>  || Type::IsSame<_Ty, ArrayBody*>;
+
+    template <typename _Fr, typename _To> concept Castable = requires { static_cast<_To>(_Fr{}); };
 
     namespace Type
     {
@@ -73,23 +111,8 @@ namespace mxl
         inline constexpr ID operator|=(ID& rhs, ID lhs) { rhs = rhs | lhs; return rhs; }
         inline constexpr ID operator~(ID id)            { return (Type::ID)(~(uint16_t)(id)); }
 
-        inline constexpr bool IsNumeric(ID id)
-        {
-            switch (id)
-            {
-                case ID::Int16:
-                case ID::Int32:
-                case ID::Int64:
-                case ID::Float:
-                case ID::Double:
-                    return true;
-                default:
-                    return false;
-            }
-        }
 
-        template <typename _Ty>
-        inline consteval ID GetID()
+        template <typename _Ty> consteval ID GetID()
         {
             if constexpr (IsSame<_Ty, short> || IsSame<_Ty, int16_t>)
                 return ID::Int16;
@@ -105,12 +128,25 @@ namespace mxl
                 return ID::String;
             if constexpr (IsSame<_Ty, Variant>)
                 return ID::Variant;
+            if constexpr (IsArray<_Ty>)
+                return GetID<typename _Ty::ValueType>() | ID::Array;
 
             return ID::Empty;
         }
 
+
+        constexpr bool IsNumericID(ID id)
+        {
+            return id == Type::ID::Int16
+                || id == Type::ID::Int32
+                || id == Type::ID::Int64
+                || id == Type::ID::Float
+                || id == Type::ID::Double;
+        }
+
+
         // Translates Excel date to Tuple containing Year, Month and Day
-        inline constexpr std::tuple<uint16_t, uint8_t, uint8_t> DeserializeDate(double date)
+        constexpr std::tuple<uint16_t, uint8_t, uint8_t> DeserializeDate(double date)
         {
             // I have no idea how this does what it does, but it works and it's fast.
             // Credits: https://www.codeproject.com/Articles/2750/Excel-Serial-Date-to-Day-Month-Year-and-Vice-Versa
@@ -129,4 +165,4 @@ namespace mxl
             return {year, month, day};
         }
     };
-};
+}

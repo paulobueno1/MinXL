@@ -1,4 +1,7 @@
 .DS_Store
 .vscode/
-Main.cpp
-Main
+examples/
+*.d
+*.o
+*__Debug
+*__Release
