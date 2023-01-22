@@ -57,19 +57,6 @@ namespace mxl
 
         Array(const Variant& var);
         Array(Variant&& var);
-        
-        template<Castable<_Ty>... _Args>
-        static Array<_Ty> FromList(_Args&&... args)
-        {
-            Array<_Ty> arr(sizeof...(_Args), 1);
-
-            int32_t i = 0;
-            (...,
-                (arr(i++, 0) = static_cast<_Ty>(std::move(args)))
-            );            
-
-            return arr;
-        }
 
         ~Array();
 
@@ -80,6 +67,7 @@ namespace mxl
         _Ty&        operator()(const uint64_t row, const uint64_t col);
 
     public:
+
         inline auto Size() const         { return _Body.Columns.ElementCount * _Body.Rows.ElementCount;              }
         inline auto Data() const         { return static_cast<_Ty*>(_Body.Data);                                     }
         inline auto Rows() const         { return _Body.Rows.ElementCount;                                           }
@@ -87,6 +75,7 @@ namespace mxl
         inline auto ElementSize() const  { return _Body.ElementSize;                                                 }
         inline auto Column(uint64_t col) { return std::make_pair(&operator()(0, col), &operator()(Rows(), col));     }
 
+        // Test
         void Resize(const uint64_t rows, const uint64_t cols);
 
     private:
@@ -94,8 +83,23 @@ namespace mxl
         static void Deallocate(ArrayBody* array);
     };
 
-    template <ArrayValue _Ty> _Ty*          begin(Array<_Ty>& arr);
-    template <ArrayValue _Ty> _Ty*          end(Array<_Ty>& arr);
-    template <ArrayValue _Ty> const _Ty*    begin(const Array<_Ty>& arr);
-    template <ArrayValue _Ty> const _Ty*    end(const Array<_Ty>& arr);
+
+    //
+    // Tuples are simply a one-dimension mxl::Array<mxl::Variant>.
+    // They only exist for convenience, allowing the creation of inline arrays
+    // without the cumbersomeness of populating the array item by item.
+    // mxl::Tuple can be used in every way you would use mxl::Array.
+    //
+    // Example:
+    // >>> auto tp = mxl::Tuple{1.2, 2, "3"};
+    //
+    template<ArrayValue _Ty = Variant>
+    class Tuple: public Array<_Ty>
+    {
+    public:
+        Tuple(std::initializer_list<_Ty> args);
+
+        template<Castable<_Ty>... _Ts>
+        Tuple(_Ts... args);
+    };
 }

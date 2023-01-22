@@ -119,6 +119,13 @@ namespace mxl
         template<Numeric _Ty> bool      operator>(const _Ty value) const;
         template<Numeric _Ty> bool      operator>=(const _Ty value) const;
 
+        // Unary operators
+
+        Variant& operator++();
+        Variant  operator++(int);
+        Variant  operator-() const;
+        Variant& operator--();
+        Variant  operator--(int);
     };
 
     // Primitive <> Variant operators

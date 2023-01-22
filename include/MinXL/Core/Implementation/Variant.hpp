@@ -5,6 +5,7 @@
 #include "MinXL/Core/Interface/Array.hpp"
 #include "MinXL/Core/Interface/String.hpp"
 #include "MinXL/Core/Interface/Variant.hpp"
+#include "Variant.hpp"
 
 
 namespace mxl
@@ -668,6 +669,87 @@ namespace mxl
         }
 
         MXL_THROW("Invalid attempt to perform comparison between incompatible Variants");
+    }
+
+
+    inline Variant Variant::operator-() const
+    {
+        if (IsNumeric())
+        {
+            auto ret = *this;
+            ret *= -1;
+            return ret;
+        }
+        else if (IsEmpty())
+        {
+            return Variant{};
+        }
+
+        MXL_THROW("Invalid attempt to change signal of non-numeric Variant");
+    }
+
+
+    inline Variant& Variant::operator++()
+    {
+        if (IsNumeric())
+        {
+            switch (_Type)
+            {
+                case Type::ID::Int16:     _Value.Int16++;
+                case Type::ID::Int32:     _Value.Int32++;
+                case Type::ID::Int64:     _Value.Int64++;
+                case Type::ID::Float:     _Value.Float++;
+                case Type::ID::Double:    _Value.Double++;
+                case Type::ID::Empty:     *this = Variant{0} + 1;
+                default: ;
+            }
+        }
+        else
+        {
+            MXL_THROW("Invalid attempt to pre-increment non-numeric Variant");
+        }
+
+        return *this;
+    }
+
+
+    inline Variant Variant::operator++(int)
+    {
+        auto temp = *this;
+        operator++();
+        return temp;
+    }
+
+
+    inline Variant& Variant::operator--()
+    {
+        if (IsNumeric())
+        {
+            switch (_Type)
+            {
+                case Type::ID::Int16:     _Value.Int16--;
+                case Type::ID::Int32:     _Value.Int32--;
+                case Type::ID::Int64:     _Value.Int64--;
+                case Type::ID::Float:     _Value.Float--;
+                case Type::ID::Double:    _Value.Double--;
+                case Type::ID::Empty:     *this = Variant{0} - 1;
+                default: ;
+            }
+        }
+        else
+        {
+            MXL_THROW("Invalid attempt to pre-decrement non-numeric Variant");
+        }
+
+        return *this;
+    }
+
+
+    inline Variant Variant::operator--(int)
+    {
+        auto temp = *this;
+        operator--();
+        return temp;
     }
 
 

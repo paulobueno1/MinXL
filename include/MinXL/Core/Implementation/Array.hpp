@@ -211,29 +211,68 @@ namespace mxl
     }
 
 
+    template<ArrayValue _Ty>
+    inline Tuple<_Ty>::Tuple(std::initializer_list<_Ty> args): Array<_Ty>(args.size(), 1)
+    {
+        for (size_t i = 0; auto&& a : args)
+            this->operator()(i++, 0) = a;
+    }
+
+
+    template<ArrayValue _Ty>
+    template<Castable<_Ty>... _Ts>
+    inline Tuple<_Ty>::Tuple(_Ts... args): Array<_Ty>(sizeof...(_Ts), 1)
+    {
+        int32_t i = 0;
+        (...,
+            (this->operator()(i++, 0) = static_cast<Variant>(std::move(args)))
+        );  
+    }
+    
+
+    // Returns pointer to first element.
     template <ArrayValue _Ty>
     inline _Ty* begin(Array<_Ty>& arr)
     {
         return arr.Data();
     }
 
-
+    
+    // Returns pointer to after the last element.
     template <ArrayValue _Ty>
     inline _Ty* end(Array<_Ty>& arr)
     { 
         return arr.Data() + arr.Size();
     }
 
-
+    
+    // Returns const pointer to first element.
     template <ArrayValue _Ty>
     inline const _Ty* begin(const Array<_Ty>& arr)
     { 
         return arr.Data();
     }
 
-
+    
+    // Returns pointer to after the last element.
     template <ArrayValue _Ty>
     inline const _Ty* end(const Array<_Ty>& arr)
+    { 
+        return arr.Data() + arr.Size();
+    }
+
+    
+    // Returns const pointer to first element.
+    template <ArrayValue _Ty>
+    inline const _Ty* cbegin(const Array<_Ty>& arr)
+    { 
+        return arr.Data();
+    }
+
+    
+    // Returns pointer to after the last element.
+    template <ArrayValue _Ty>
+    inline const _Ty* cend(const Array<_Ty>& arr)
     { 
         return arr.Data() + arr.Size();
     }

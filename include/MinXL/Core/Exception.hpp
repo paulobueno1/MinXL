@@ -19,7 +19,7 @@ namespace mxl
     {
         consteval auto StripPath(std::string_view path)
         {
-            return path.substr(path.find("src/") + sizeof("src/") - 1).data();
+            return path.substr(path.find("include/") + sizeof("include/") - 1).data();
         }
     }
 
