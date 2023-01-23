@@ -97,6 +97,9 @@ namespace mxl
     }
 
 
+    //
+    // Returns ID of the underlying data type.
+    //
     inline Type::ID Variant::TypeID() const
     {
         return _Type;
@@ -133,21 +136,30 @@ namespace mxl
     }
 
 
+    //
+    // Returns ID of the data type contained in the underlying mxl::Array.
+    //
     inline Type::ID Variant::ArrayTypeID() const
     {
         return IsArray() ? _Type ^ Type::ID::Array : Type::ID::Empty;
     }
 
 
-    inline bool Variant::IsArrayOfTypeID(Type::ID type) const
+    //
+    // Checks if parameter matches ID of the data type contained in the underlying mxl::Array.
+    //
+    inline bool Variant::IsArrayOfTypeID(Type::ID id) const
     {
-        return IsArray() && (type == (_Type ^ Type::ID::Array));
+        return IsArray() && (id == (_Type ^ Type::ID::Array));
     }
 
 
-    inline bool Variant::IsArrayOfTypeID(uint32_t type) const
+    //
+    // Checks if parameter matches ID of the data type contained in the underlying mxl::Array.
+    //
+    inline bool Variant::IsArrayOfTypeID(uint32_t id) const
     {
-        return IsArray() && ((Type::ID)type == (_Type ^ Type::ID::Array));
+        return IsArray() && ((Type::ID)id == (_Type ^ Type::ID::Array));
     }
 
 
@@ -184,6 +196,9 @@ namespace mxl
     }
 
 
+    //
+    // Performs a "self-move" into a new mxl::String and returns it.
+    //
     inline Variant::operator String() &&
     {
         String str = std::move(operator String&());
@@ -194,12 +209,18 @@ namespace mxl
     }
 
 
+    //
+    // Copies underlying mxl::String into a new one and returns it.
+    //
     inline Variant::operator String() const &
     {
         return operator const String&();
     }
 
 
+    //
+    // Exposes a reference to the underlying mxl::String.
+    //
     inline Variant::operator String&()
     {
         if (IsString())
@@ -209,6 +230,9 @@ namespace mxl
     }
 
 
+    //
+    // Exposes a const reference to the underlying mxl::String.
+    //
     inline Variant::operator const String&() const
     {
         return static_cast<const String&>(
@@ -255,6 +279,9 @@ namespace mxl
     }
 
 
+    //
+    // Performs a "self-move" into a new mxl::Array and returns it.
+    //
     template <ArrayValue _Ty>
     inline Variant::operator Array<_Ty>() &&
     {
@@ -266,6 +293,9 @@ namespace mxl
     }
 
 
+    //
+    // Copies underlying mxl::Array into a new one and returns it.
+    //
     template <ArrayValue _Ty>
     inline Variant::operator Array<_Ty>() const &
     {
@@ -273,6 +303,9 @@ namespace mxl
     }
 
 
+    //
+    // Exposes a reference to the underlying mxl::Array.
+    //
     template <ArrayValue _Ty>
     inline Variant::operator Array<_Ty>&()
     {
@@ -292,6 +325,9 @@ namespace mxl
     }
 
 
+    //
+    // Exposes a const reference to the underlying mxl::Array.
+    //
     template <ArrayValue _Ty>
     inline Variant::operator const Array<_Ty>&() const
     {
@@ -313,6 +349,9 @@ namespace mxl
     }
 
 
+    //
+    // Exposes a reference to the underlying numeric value.
+    //
     template <Numeric _Ty>
     inline Variant::operator _Ty&()
     {
@@ -334,6 +373,9 @@ namespace mxl
     }
 
 
+    //
+    // Exposes a const reference to the underlying numeric value.
+    //
     template <Numeric _Ty>
     inline Variant::operator const _Ty&() const
     {
@@ -343,6 +385,9 @@ namespace mxl
     }
 
 
+    //
+    // Frees owned resources.
+    //
     inline void Variant::Deallocate()
     {
         if (IsArray())

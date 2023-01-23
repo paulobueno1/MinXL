@@ -31,31 +31,33 @@ namespace mxl
         String();
         String(const String& other);
         String(String&& other);
-        String& operator=(const String& other);
-        String& operator=(String&& other);
         String(const char16_t* str);
         String(const char* str);
         String(const Variant& var);
         String(Variant&& var);
 
+        String& operator=(const String& other);
+        String& operator=(String&& other);
+
         ~String();
 
     private:
         String(StringContainer* str);
+        StringContainer*        Container() const;
 
 
     public:
         uint64_t                Size() const;
         char16_t*               Buffer() const;
-        StringContainer*        Container() const;
-
-        static bool             Compare(const char16_t* lhs, const char16_t* rhs);
-        static const char*      Str16to8(const char16_t* str);
-        static const char16_t*  Str8to16(const char* str);
+        std::unique_ptr<char[]> CStr() const;
 
         bool                    operator==(const String& other) const;
         bool                    operator!=(const String& other) const;
 
+    private:
+        static bool Compare(const char16_t* lhs, const char16_t* rhs);
+        static std::unique_ptr<char[]> Char16to8(const char16_t* str);
+        static std::unique_ptr<char16_t[]> Char8to16(const char* str);
 
     private:
         void                    Allocate(const char16_t* str);

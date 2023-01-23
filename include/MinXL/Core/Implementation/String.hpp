@@ -24,7 +24,7 @@ namespace mxl
     }
 
 
-    inline String::String(const char* str): String(Str8to16(str))
+    inline String::String(const char* str): String(Char8to16(str).get())
     {
     }
 
@@ -103,6 +103,12 @@ namespace mxl
     inline char16_t* String::Buffer() const
     {
         return _Buffer;
+    }
+
+
+    inline std::unique_ptr<char[]> String::CStr() const
+    {
+        return Char16to8(Buffer());
     }
 
 
@@ -186,31 +192,30 @@ namespace mxl
     }
 
 
-    inline const char* String::Str16to8(const char16_t* str)
+    inline std::unique_ptr<char[]> String::Char16to8(const char16_t* str)
     {
         if (!(*str))
-            return new char[1]{'\0'};
+            return std::unique_ptr<char[]>(new char[1]{'\0'});
 
         const char16_t* end = str;
 
         while (*end++);
 
         int n = end - str;
-        char* converted = new char[n];
+        auto converted = std::unique_ptr<char[]>(new char[n]{'\0'});
 
         for (int c = 0; c < n - 1; c++)
             converted[c] = (char)(str[c]);
 
-        converted[n - 1] = '\0';
         return converted;
     }
 
 
-    inline const char16_t* String::Str8to16(const char* str)
+    inline std::unique_ptr<char16_t[]> String::Char8to16(const char* str)
     {
         if (!(*str))
         {
-            return new char16_t[1]{'\0'};
+            return std::unique_ptr<char16_t[]>(new char16_t[1]{'\0'});
         }
 
         const char* end = str;
@@ -218,17 +223,16 @@ namespace mxl
         while (*end++);
 
         int n = end - str;
-        char16_t* converted = new char16_t[n];
+        auto converted = std::unique_ptr<char16_t[]>(new char16_t[n]{'\0'});
 
         for (int c = 0; c < n - 1; c++)
             converted[c] = (char16_t)(str[c]);
 
-        converted[n - 1] = '\0';
         return converted;
     }
 
     inline std::ostream& operator<<(std::ostream &os, const String& str)
     {
-        return os << String::Str16to8(str.Buffer());
+        return os << str.CStr();
     }
 }

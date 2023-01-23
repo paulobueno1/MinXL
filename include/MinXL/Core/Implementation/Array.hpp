@@ -65,19 +65,6 @@ namespace mxl
     {
     }
 
-    // template<ArrayValue _Ty>
-    // template<typename...>
-    // inline Array<_Ty>::Array(_Ty&&... args)
-    // {
-    //     if (Allocate(sizeof...(_Ty), 1))
-    //     {
-    //         int32_t i = 0;
-    //         (...,
-    //             (operator()(i++, 0) = std::move(args))
-    //         );
-    //     }
-    // }
-
 
     template<ArrayValue _Ty>
     inline Array<_Ty>::~Array()
