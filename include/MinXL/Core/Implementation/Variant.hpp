@@ -740,12 +740,12 @@ namespace mxl
         {
             switch (_Type)
             {
-                case Type::ID::Int16:     _Value.Int16++;
-                case Type::ID::Int32:     _Value.Int32++;
-                case Type::ID::Int64:     _Value.Int64++;
-                case Type::ID::Float:     _Value.Float++;
-                case Type::ID::Double:    _Value.Double++;
-                case Type::ID::Empty:     *this = Variant{0} + 1;
+                case Type::ID::Int16:     _Value.Int16++; break;
+                case Type::ID::Int32:     _Value.Int32++; break;
+                case Type::ID::Int64:     _Value.Int64++; break;
+                case Type::ID::Float:     _Value.Float++; break;
+                case Type::ID::Double:    _Value.Double++; break;
+                case Type::ID::Empty:     *this = Variant{0} + 1; break;
                 default: ;
             }
         }
@@ -772,12 +772,12 @@ namespace mxl
         {
             switch (_Type)
             {
-                case Type::ID::Int16:     _Value.Int16--;
-                case Type::ID::Int32:     _Value.Int32--;
-                case Type::ID::Int64:     _Value.Int64--;
-                case Type::ID::Float:     _Value.Float--;
-                case Type::ID::Double:    _Value.Double--;
-                case Type::ID::Empty:     *this = Variant{0} - 1;
+                case Type::ID::Int16:     _Value.Int16--; break;
+                case Type::ID::Int32:     _Value.Int32--; break;
+                case Type::ID::Int64:     _Value.Int64--; break;
+                case Type::ID::Float:     _Value.Float--; break;
+                case Type::ID::Double:    _Value.Double--; break;
+                case Type::ID::Empty:     *this = Variant{0} - 1; break;
                 default: ;
             }
         }
