@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MinXL/Core/Common.hpp"
 #include "MinXL/Core/Types.hpp"
 
 
@@ -12,62 +11,59 @@ namespace mxl
         uint32_t Size;
     };
 
+
     struct StringContainer
     {
-        StringHeader    Head;
-        char16_t        Buffer[2];
+        StringHeader Header;
+        char16_t Buffer[2];
     };
 
 
     class String
     {
         friend class Variant;
-        
-    public:
-        using Container = StringContainer;
 
     private:
-        Container* _Container{nullptr};
+        char16_t* _Buffer;
+
 
     public:
         String();
+        String(const String& other);
+        String(String&& other);
         String(const char16_t* str);
         String(const char* str);
-        String(const String& other);
-        String(const std::string& str);
-        String(const std::string_view& str);
-        String(const std::stringstream& str);
-
-        String(String&& other);
-        
-        String& operator=(const String& other);
-        String& operator=(String&& other);
-
         String(const Variant& var);
         String(Variant&& var);
-        String& operator=(const Variant& other);
-        String& operator=(Variant&& other);
 
-        bool operator==(const String& other);
-        bool operator!=(const String& other);
-
-        inline operator char16_t*() const { return _Container ? _Container->Buffer : nullptr; }
+        String& operator=(const String& other);
+        String& operator=(String&& other);
 
         ~String();
 
     private:
-        void                    Allocate(const char16_t* str);
-        void                    Allocate(const String& str);
-        static void             Deallocate(char16_t* str);
-        static void             Deallocate(String& str);
+        String(StringContainer* str);
+        StringContainer*        Container() const;
+
 
     public:
         uint64_t                Size() const;
-        const char*             CStr() const;
-        const char16_t*         WStr() const;
+        char16_t*               Buffer() const;
+        std::unique_ptr<char[]> CStr() const;
 
-        static bool             Compare(const char16_t* lhs, const char16_t* rhs);
-        static const char*      Str16to8(const char16_t* str);
-        static const char16_t*  Str8to16(const char* str);
+        bool                    operator==(const String& other) const;
+        bool                    operator!=(const String& other) const;
+
+    private:
+        static bool Compare(const char16_t* lhs, const char16_t* rhs);
+        static std::unique_ptr<char[]> Char16to8(const char16_t* str);
+        static std::unique_ptr<char16_t[]> Char8to16(const char* str);
+
+    private:
+        void                    Allocate(const char16_t* str);
+        static void             Deallocate(char16_t* str);
     };
+
+
+    std::ostream& operator<<(std::ostream &os, const String& str);
 }

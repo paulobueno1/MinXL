@@ -1,14 +1,15 @@
 #pragma once
 
+#include "MinXL/Core/Types.hpp"
 #include "MinXL/Core/Interface/Array.hpp"
+
 
 namespace mxl
 {
     template<ArrayValue _Ty>
-    inline Array<_Ty>::Array()
+    inline Array<_Ty>::Array(): _Header{}, _Body{}
     {
     }
-
 
     template<ArrayValue _Ty>
     inline Array<_Ty>::Array(const uint64_t rows, const uint64_t cols)
@@ -21,17 +22,15 @@ namespace mxl
     inline Array<_Ty>::Array(const Array<_Ty>& other)
     {
         if (Allocate(other.Rows(), other.Columns()))
-            std::copy(cbegin(other), cend(other), begin(*this));
+            std::copy(begin(other), end(other), begin(*this));
     }
 
 
     template<ArrayValue _Ty>
     inline Array<_Ty>::Array(Array<_Ty>&& other)
     {
-        _Header         = other._Header;
-        _Body           = other._Body;
-        other._Header   = ArrayHeader{};
-        other._Body     = ArrayBody{};
+        std::memcpy(this, &other, sizeof(Array<_Ty>));
+        std::memset(&other, 0, sizeof(Array<_Ty>));
     }
 
 
@@ -39,7 +38,7 @@ namespace mxl
     inline Array<_Ty>& Array<_Ty>::operator=(const Array<_Ty>& other)
     {
         if (Allocate(other.Rows(), other.Columns()))
-            std::copy(cbegin(other), cend(other), begin(*this));
+            std::copy(begin(other), end(other), begin(*this));
 
         return *this;
     }
@@ -48,91 +47,22 @@ namespace mxl
     template<ArrayValue _Ty>
     inline Array<_Ty>& Array<_Ty>::operator=(Array<_Ty>&& other)
     {
-        _Header         = other._Header;
-        _Body           = other._Body;
-        other._Header   = ArrayHeader{};
-        other._Body     = ArrayBody{};
+        std::memcpy(this, &other, sizeof(Array<_Ty>));
+        std::memset(&other, 0, sizeof(Array<_Ty>));
 
         return *this;
     }
 
 
     template<ArrayValue _Ty>
-    inline Array<_Ty>::Array(const Variant& var)
+    inline Array<_Ty>::Array(const Variant& var): Array<_Ty>(static_cast<const Array<_Ty>&>(var))
     {
-        const auto value = var.Value();
-
-        if (var.IsArray() && value.Array)
-        {
-            if (value.Array->Data)
-            {
-                const uint64_t cols = value.Array->Columns.ElementCount;
-                const uint64_t rows = value.Array->Rows.ElementCount;
-                constexpr auto type = Type::GetID<_Ty>();
-
-                if (var.IsArrayOfType(type))
-                {
-                    auto src  = reinterpret_cast<Array*>((char*)value.Array - sizeof(ArrayHeader));
-
-                    if (Allocate(rows, cols))
-                        std::copy(cbegin(*src), cend(*src), begin(*this));
-                }
-                else
-                {
-                    MXL_THROW("Invalid attempt to copy-construct Array from Variant; type mismatch detected");
-                }
-            }
-        }
-        else
-        {
-            MXL_THROW("Invalid attempt to copy-construct Array from Variant; passed Variant is not an array");
-        }
     }
 
 
     template<ArrayValue _Ty>
-    inline Array<_Ty>::Array(Variant&& var)
+    inline Array<_Ty>::Array(Variant&& var): Array<_Ty>(std::move(var).operator Array<_Ty>())
     {
-        auto value = var.Value();
-
-        if (var.IsArray() && value.Array)
-        {
-            constexpr auto type = Type::GetID<_Ty>();
-
-            if (var.IsArrayOfType(type))
-            {
-                auto src = reinterpret_cast<Array*>((char*)value.Array - sizeof(ArrayHeader));
-
-                _Header         = src->_Header;
-                _Body           = src->_Body;
-                src->_Header    = ArrayHeader{};
-                src->_Body      = ArrayBody{};
-            }
-            else
-            {
-                MXL_THROW("Invalid attempt to move-construct Array from Variant; type mismatch");
-            }
-        }
-        else
-        {
-            MXL_THROW("Invalid attempt to move-construct Array from Variant; passed Variant is not an array");
-        }
-    }
-
-
-    template<ArrayValue _Ty>
-    inline Array<_Ty>::Array(const std::vector<_Ty>& vec)
-    {
-        if (Allocate(vec.size(), 1))
-            std::copy(vec.cbegin(), vec.cend(), begin(*this));
-    }
-
-
-    template<ArrayValue _Ty>
-    inline Array<_Ty>::Array(const std::initializer_list<_Ty>&& vec)
-    {
-        if (Allocate(vec.size(), 1))
-            std::copy(vec.begin(), vec.end(), begin(*this));
     }
 
 
@@ -142,8 +72,7 @@ namespace mxl
         if (_Body.Data)
             std::free(_Body.Data);
         
-        _Header = ArrayHeader{};
-        _Body   = ArrayBody{};
+        std::memset(this, 0, sizeof(Array<_Ty>));
     }
 
 
@@ -151,10 +80,6 @@ namespace mxl
     inline bool Array<_Ty>::Allocate(const uint64_t rows, const uint64_t cols)
     {
         constexpr auto type = Type::GetID<_Ty>();
-        
-        static_assert(
-            type != Type::ID::Empty, "Attempt to instantiate Array with unsupported type."
-        );
 
         if (auto buffer = std::calloc(rows * cols, sizeof(_Ty)))
         {
@@ -273,31 +198,69 @@ namespace mxl
     }
 
 
+    template<ArrayValue _Ty>
+    inline Tuple<_Ty>::Tuple(std::initializer_list<_Ty> args): Array<_Ty>(args.size(), 1)
+    {
+        for (size_t i = 0; auto&& a : args)
+            this->operator()(i++, 0) = a;
+    }
+
+
+    template<ArrayValue _Ty>
+    template<Castable<_Ty>... _Ts>
+    inline Tuple<_Ty>::Tuple(_Ts... args): Array<_Ty>(sizeof...(_Ts), 1)
+    {
+        int32_t i = 0;
+        (...,
+            (this->operator()(i++, 0) = static_cast<Variant>(std::move(args)))
+        );  
+    }
+    
+
+    // Returns pointer to first element.
     template <ArrayValue _Ty>
-    inline auto begin(Array<_Ty>& arr)
+    inline _Ty* begin(Array<_Ty>& arr)
     {
         return arr.Data();
     }
 
-
+    
+    // Returns pointer to after the last element.
     template <ArrayValue _Ty>
-    inline auto end(Array<_Ty>& arr)
+    inline _Ty* end(Array<_Ty>& arr)
     { 
         return arr.Data() + arr.Size();
     }
 
-
+    
+    // Returns const pointer to first element.
     template <ArrayValue _Ty>
-    inline auto cbegin(const Array<_Ty>& arr)
+    inline const _Ty* begin(const Array<_Ty>& arr)
     { 
         return arr.Data();
     }
 
-
+    
+    // Returns pointer to after the last element.
     template <ArrayValue _Ty>
-    inline auto cend(const Array<_Ty>& arr)
+    inline const _Ty* end(const Array<_Ty>& arr)
+    { 
+        return arr.Data() + arr.Size();
+    }
+
+    
+    // Returns const pointer to first element.
+    template <ArrayValue _Ty>
+    inline const _Ty* cbegin(const Array<_Ty>& arr)
+    { 
+        return arr.Data();
+    }
+
+    
+    // Returns pointer to after the last element.
+    template <ArrayValue _Ty>
+    inline const _Ty* cend(const Array<_Ty>& arr)
     { 
         return arr.Data() + arr.Size();
     }
 }
-

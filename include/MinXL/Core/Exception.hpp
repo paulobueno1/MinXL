@@ -19,7 +19,7 @@ namespace mxl
     {
         consteval auto StripPath(std::string_view path)
         {
-            return path.substr(path.find("src/") + sizeof("src/") - 1).data();
+            return path.substr(path.find("include/") + sizeof("include/") - 1).data();
         }
     }
 
@@ -34,7 +34,7 @@ namespace mxl
             auto nLength = std::strlen(message) + std::strlen(file_line) + 32;
             m_What = new char[nLength];
 
-            std::snprintf(m_What, nLength, "[Aspirin++] Exception: %s (at %s)", message, file_line);
+            std::snprintf(m_What, nLength, "[MinXL] Exception: %s (at %s)", message, file_line);
         }
 
         const char* what() const noexcept override

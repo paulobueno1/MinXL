@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MinXL/Core/Common.hpp"
 #include "MinXL/Core/Types.hpp"
 
 
@@ -37,7 +36,7 @@ namespace mxl
     };
 
 
-    template<ArrayValue _Ty> class Array
+    template<ArrayValue _Ty = Variant> class Array
     {
         friend class Variant;
 
@@ -58,8 +57,6 @@ namespace mxl
 
         Array(const Variant& var);
         Array(Variant&& var);
-        Array(const std::vector<_Ty>& vec);
-        Array(const std::initializer_list<_Ty>&& vec);
 
         ~Array();
 
@@ -70,14 +67,15 @@ namespace mxl
         _Ty&        operator()(const uint64_t row, const uint64_t col);
 
     public:
-        auto Type() const         { return _Header.Type;                                                      }
-        auto Size() const         { return _Body.Columns.ElementCount * _Body.Rows.ElementCount;              }
-        auto Data() const         { return static_cast<_Ty*>(_Body.Data);                                     }
-        auto Rows() const         { return _Body.Rows.ElementCount;                                           }
-        auto Columns() const      { return _Body.Columns.ElementCount;                                        }
-        auto ElementSize() const  { return _Body.ElementSize;                                                 }
-        auto Column(uint64_t col) { return std::make_pair(&operator()(0, col), &operator()(Rows(), col));    }
 
+        inline auto Size() const         { return _Body.Columns.ElementCount * _Body.Rows.ElementCount;              }
+        inline auto Data() const         { return static_cast<_Ty*>(_Body.Data);                                     }
+        inline auto Rows() const         { return _Body.Rows.ElementCount;                                           }
+        inline auto Columns() const      { return _Body.Columns.ElementCount;                                        }
+        inline auto ElementSize() const  { return _Body.ElementSize;                                                 }
+        inline auto Column(uint64_t col) { return std::make_pair(&operator()(0, col), &operator()(Rows(), col));     }
+
+        // Test
         void Resize(const uint64_t rows, const uint64_t cols);
 
     private:
@@ -85,8 +83,23 @@ namespace mxl
         static void Deallocate(ArrayBody* array);
     };
 
-    template <ArrayValue _Ty> auto begin   (Array<_Ty>& arr);
-    template <ArrayValue _Ty> auto end     (Array<_Ty>& arr);
-    template <ArrayValue _Ty> auto cbegin  (const Array<_Ty>& arr);
-    template <ArrayValue _Ty> auto cend    (const Array<_Ty>& arr);
+
+    //
+    // Tuples are simply a one-dimension mxl::Array<mxl::Variant>.
+    // They only exist for convenience, allowing the creation of inline arrays
+    // without the cumbersomeness of populating the array item by item.
+    // mxl::Tuple can be used in every way you would use mxl::Array.
+    //
+    // Example:
+    // >>> auto tp = mxl::Tuple{1.2, 2, "3"};
+    //
+    template<ArrayValue _Ty = Variant>
+    class Tuple: public Array<_Ty>
+    {
+    public:
+        Tuple(std::initializer_list<_Ty> args);
+
+        template<Castable<_Ty>... _Ts>
+        Tuple(_Ts... args);
+    };
 }

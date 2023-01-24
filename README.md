@@ -61,10 +61,10 @@ extern "C"
 ```VB
 Private Declare PtrSafe Function IncrementArrayBy _
 Lib "/Library/Application Support/Microsoft/YourLibrary.dylib" _
-(ByRef v as Variant, ByVal d as Double) As Variant      ' Always pass Variants ByRef!
+(ByRef v as Variant, ByVal d as Double) As Variant     ' Always pass Variants ByRef!
 
 Public Function CallLibFunction(r as Range) as Variant
-    CallLibFunction = IncrementArrayBy(r.Value, 2.5)    ' Extract the Range's values first!!!
+    CallLibFunction = IncrementArrayBy(r.Value2, 2.5)  ' Extract the Range's values first!!!
 End Function
 ```
 
