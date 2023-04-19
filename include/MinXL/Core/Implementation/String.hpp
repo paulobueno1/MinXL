@@ -96,7 +96,7 @@ namespace mxl
 
     inline uint64_t String::Size() const
     {
-        return _Buffer ? Container()->Header.Size / sizeof(char16_t) : 0;
+        return _Buffer ? Container()->Header.Size : 0;
     }
 
 
@@ -143,7 +143,7 @@ namespace mxl
 
             if (auto container = static_cast<StringContainer*>(std::malloc(allocSize)))
             {
-                container->Header.Size = (length - 1) * sizeof(char16_t);
+                container->Header.Size = (length - 1);
                 std::copy(str, str + length, container->Buffer);
                 
                 _Buffer = container->Buffer;
