@@ -20,8 +20,9 @@ namespace mxl
 
     struct ArrayHeader
     {
-        uint8_t     Reserved[12];
+        uint8_t     ReservedStart[8];
         uint32_t    Type;
+        uint8_t     ReservedEnd[4];
     };
 
     struct ArrayBody
